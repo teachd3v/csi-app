@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat)",
+      "Bash(chmod +x /tmp/convert-screens.sh)",
+      "Bash(sed -i \"2i import { useState } from 'react'\\\\nimport { Pill, Glass, Btn, Sparkline } from '../components'\\\\nimport { DIM_SCORES } from '../data'\" landing.jsx)",
+      "Bash(sed -i 's/^const { useState: lpUseState } = React;//' landing.jsx)",
+      "Bash(sed -i 's/window\\\\.LandingScreen = LandingScreen;/export { LandingScreen }/' landing.jsx)",
+      "Bash(sed -i \"2i import { useState, useEffect, useRef } from 'react'\\\\nimport { Pill, Glass, Btn, fireConfetti } from '../components'\\\\nimport { QUESTIONS, LIKERT, csiCategory } from '../data'\" survey.jsx)",
+      "Bash(sed -i 's/^const { useState: svUseState.*$//' survey.jsx)",
+      "Bash(sed -i 's/svUseState/useState/g' survey.jsx)",
+      "Bash(sed -i 's/svUseEffect/useEffect/g' survey.jsx)",
+      "Bash(sed -i 's/svUseRef/useRef/g' survey.jsx)",
+      "Bash(sed -i 's/dbUseState/useState/g' dashboard.jsx)",
+      "Bash(sed -i 's/lpUseState/useState/g' landing.jsx)",
+      "Bash(netstat -ano)",
+      "Bash(npm run *)",
+      "Bash(npm list *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__switch_browser",
+      "Bash(git init *)",
+      "Bash(git config *)"
+    ]
+  }
+}
