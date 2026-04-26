@@ -1,17 +1,26 @@
 import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { MeshBackground } from './components'
-import { QUESTIONS, DEVICE_SIZES } from './data'
+import { getInstrument, DEVICE_SIZES } from './data'
 import { LandingScreen } from './screens/landing'
 import { SurveyScreen } from './screens/survey'
 import { DashboardScreen } from './screens/dashboard'
 import { AdminScreen } from './screens/admin'
 import { ErrorBoundary } from './ErrorBoundary'
 
-function App() {
-  const [screen, setScreen] = useState("landing");
-  const [sharedQuestions, setSharedQuestions] = useState(QUESTIONS);
+function AppContent() {
+  const [activeInstrument, setActiveInstrument] = useState(() => {
+    return localStorage.getItem("csi_active_instrument") || "csi";
+  });
+  const [sharedQuestions, setSharedQuestions] = useState(() => {
+    const initial = localStorage.getItem("csi_active_instrument") || "csi";
+    return getInstrument(initial).questions;
+  });
   const [darkMode, setDarkMode] = useState(false);
   const [deviceView, setDeviceView] = useState("desktop");
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -23,9 +32,20 @@ function App() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [screen]);
+  }, [location.pathname]);
 
-  const navigate = (s) => setScreen(s);
+  useEffect(() => {
+    localStorage.setItem("csi_active_instrument", activeInstrument);
+    const instrument = getInstrument(activeInstrument);
+    setSharedQuestions(instrument.questions);
+  }, [activeInstrument]);
+
+  const handleNav = (s) => {
+    if (s === "landing") navigate("/");
+    else navigate(`/${s}`);
+  };
+
+  const currentScreen = location.pathname === "/" ? "landing" : location.pathname.substring(1);
 
   return (
     <ErrorBoundary>
@@ -33,39 +53,25 @@ function App() {
         <div className="csi-shell">
         <MeshBackground />
 
-        <div key={screen} className="csi-screen-enter">
-          {screen === "landing" && <LandingScreen onNav={navigate} />}
-          {screen === "survey" && <SurveyScreen onNav={navigate} />}
-          {screen === "dashboard" && <DashboardScreen onNav={navigate} />}
-          {screen === "admin" && (
-            <AdminScreen
-              onNav={navigate}
-              sharedQuestions={sharedQuestions}
-              setSharedQuestions={setSharedQuestions}
-            />
-          )}
+        <div key={location.pathname} className="csi-screen-enter">
+          <Routes>
+            <Route path="/" element={<LandingScreen onNav={handleNav} activeInstrument={activeInstrument} onInstrumentChange={setActiveInstrument} />} />
+            <Route path="/survey" element={<SurveyScreen onNav={handleNav} questions={sharedQuestions} activeInstrument={activeInstrument} />} />
+            <Route path="/dashboard" element={<DashboardScreen onNav={handleNav} activeInstrument={activeInstrument} />} />
+            <Route path="/admin" element={<AdminScreen onNav={handleNav} sharedQuestions={sharedQuestions} setSharedQuestions={setSharedQuestions} activeInstrument={activeInstrument} />} />
+          </Routes>
         </div>
-
-        <nav className="csi-switcher">
-          {[
-            { k: "landing", l: "Beranda", ic: "🏠" },
-            { k: "survey", l: "Survey", ic: "📝" },
-            { k: "dashboard", l: "Dashboard", ic: "📊" },
-            { k: "admin", l: "Admin", ic: "⚙" },
-          ].map((s) => (
-            <button
-              key={s.k}
-              className={screen === s.k ? "is-active" : ""}
-              onClick={() => navigate(s.k)}
-            >
-              <span className="csi-switcher__ic">{s.ic}</span>
-              <span>{s.l}</span>
-            </button>
-          ))}
-        </nav>
         </div>
       </div>
     </ErrorBoundary>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
 

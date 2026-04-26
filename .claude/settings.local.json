@@ -20,7 +20,20 @@
       "mcp__Claude_in_Chrome__list_connected_browsers",
       "mcp__Claude_in_Chrome__switch_browser",
       "Bash(git init *)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5173/src/App.jsx)",
+      "Bash(kill -9 2021 1882 1850)",
+      "mcp__Claude_Preview__preview_start",
+      "Read(//c/tmp/**)",
+      "Bash(python3)",
+      "Bash(python3 create_comparison.py)",
+      "Bash(python3 \"C:\\\\Users\\\\Asus VivoBook\\\\AppData\\\\Local\\\\Temp\\\\create_comparison.py\")",
+      "Bash(python create_comparison.py)",
+      "Bash(pip install *)",
+      "Bash(timeout 5 ping localhost)"
     ]
   }
 }

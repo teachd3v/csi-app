@@ -1,14 +1,15 @@
 // Dashboard screen — "The Analyst"
 import { useState } from 'react'
-import { Glass, Pill, Btn, BarChart, DonutChart, ScoreGauge, Sparkline } from '../components'
-import { DIM_SCORES, SCORE_DISTRIBUTION, LIKERT_PERFORMANCE, CSI_SCORE, csiCategory } from '../data'
+import { Glass, Pill, Btn, MobileNav, BarChart, DonutChart, ScoreGauge, Sparkline } from '../components'
+import { DIM_SCORES, SCORE_DISTRIBUTION, LIKERT_PERFORMANCE, CSI_SCORE, WORDS, FEEDBACK, csiCategory, getInstrument, flattenDimensions } from '../data'
 
 
 
-function DashboardScreen({ onNav }) {
+function DashboardScreen({ onNav, activeInstrument }) {
   const [hoverDim, setHoverDim] = useState(null);
   const [tab, setTab] = useState("overview");
   const cat = csiCategory(CSI_SCORE);
+  const instrument = getInstrument(activeInstrument);
 
   const distSegments = SCORE_DISTRIBUTION.map((v, i) => ({
     value: v,
@@ -18,22 +19,10 @@ function DashboardScreen({ onNav }) {
 
   return (
     <div className="csi-page csi-dash">
-      <header className="csi-dash__top">
-        <div>
-          <button className="csi-dash__back" onClick={() => onNav("landing")}>
-            ← Beranda
-          </button>
-          <h1 className="csi-dash__title">Dashboard CSI</h1>
-          <div className="csi-dash__sub">
-            Periode <b>Q1 2026</b> · Diperbarui 25 April 2026, 14:32 WIB
-          </div>
-        </div>
-        <div className="csi-dash__actions">
-          <Btn kind="ghost" icon="⟳">Refresh</Btn>
-          <Btn kind="secondary" icon="⤓">Export PDF</Btn>
-          <Btn kind="primary" onClick={() => onNav("admin")}>Kelola Instrumen</Btn>
-        </div>
-      </header>
+      <MobileNav 
+        title="Dashboard" 
+        onNav={onNav}
+      />
 
       {/* Top row: gauge + KPI cards */}
       <div className="csi-dash__top-grid">

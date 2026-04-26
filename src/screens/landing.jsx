@@ -1,11 +1,11 @@
 // Landing page — "The Educator"
 import { useState } from 'react'
 import { Pill, Glass, Btn, Sparkline } from '../components'
-import { DIM_SCORES } from '../data'
+import { DIM_SCORES, INSTRUMENTS } from '../data'
 
 
 
-function LandingScreen({ onNav }) {
+function LandingScreen({ onNav, activeInstrument, onInstrumentChange }) {
   const [hovered, setHovered] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -38,15 +38,12 @@ function LandingScreen({ onNav }) {
         >
           ☰
         </button>
-        <nav className="csi-nav__links">
-          <a href="#metode">Metodologi</a>
-          <a href="#rumus">Rumus</a>
-          <a href="#referensi">Referensi</a>
+        <nav className={`csi-nav__links ${mobileMenuOpen ? "is-open" : ""}`}>
+          <a href="#" className="is-active" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("landing"); }}>Beranda</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("survey"); }}>Survey</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("dashboard"); }}>Dashboard</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("admin"); }}>Admin</a>
         </nav>
-        <div className="csi-nav__actions">
-          <Btn kind="ghost" onClick={() => onNav("admin")}>Admin</Btn>
-          <Btn kind="primary" onClick={() => onNav("survey")}>Mulai Survey</Btn>
-        </div>
       </header>
 
       {/* Hero */}
@@ -55,6 +52,26 @@ function LandingScreen({ onNav }) {
           <Pill tone="amber">
             <span className="csi-dot" /> Versi 2.4 · Riset Akademik
           </Pill>
+
+          <div className="csi-instrument-selector">
+            <span className="csi-instrument-selector__label">Pilih Instrumen:</span>
+            {Object.entries(INSTRUMENTS).map(([key, inst]) => (
+              <button
+                key={key}
+                className={`csi-instrument-selector__btn ${activeInstrument === key ? "is-active" : ""}`}
+                onClick={() => {
+                  onInstrumentChange(key);
+                  // Reset to landing when instrument changes
+                  if (activeInstrument !== key) {
+                    onNav("landing");
+                  }
+                }}
+              >
+                {inst.name}
+              </button>
+            ))}
+          </div>
+
           <h1 className="csi-hero__title">
             Ukur kepuasan pengguna <br />
             dengan <span className="csi-grad-text">presisi metodologis</span>.

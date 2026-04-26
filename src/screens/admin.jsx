@@ -1,11 +1,13 @@
 // Admin setup — drag-reorder, weighting, live preview
 import { useState } from 'react'
-import { Glass, Pill, Btn } from '../components'
-import { QUESTIONS, DIMENSIONS, LIKERT } from '../data'
+import { Glass, Pill, Btn, MobileNav } from '../components'
+import { LIKERT, getInstrument, flattenDimensions } from '../data'
 
 
 
-function AdminScreen({ onNav, sharedQuestions, setSharedQuestions }) {
+function AdminScreen({ onNav, sharedQuestions, setSharedQuestions, activeInstrument }) {
+  const instrument = getInstrument(activeInstrument);
+  const DIMENSIONS = flattenDimensions(instrument.dimensions);
   const [items, setItems] = useState(sharedQuestions);
   const [editingId, setEditingId] = useState(null);
   const [previewIdx, setPreviewIdx] = useState(0);
@@ -77,22 +79,10 @@ function AdminScreen({ onNav, sharedQuestions, setSharedQuestions }) {
 
   return (
     <div className="csi-page csi-admin">
-      <header className="csi-admin__top">
-        <div>
-          <button className="csi-admin__back" onClick={() => onNav("landing")}>
-            ← Beranda
-          </button>
-          <h1 className="csi-admin__title">Admin Setup · Instrument Builder</h1>
-          <div className="csi-admin__sub">
-            Atur pertanyaan, dimensi, dan bobot untuk perhitungan CSI
-          </div>
-        </div>
-        <div className="csi-admin__actions">
-          <Btn kind="ghost">Batalkan</Btn>
-          <Btn kind="secondary">Simpan Draf</Btn>
-          <Btn kind="primary">Publikasikan →</Btn>
-        </div>
-      </header>
+      <MobileNav 
+        title="Admin" 
+        onNav={onNav}
+      />
 
       <div className="csi-admin__layout">
         {/* LEFT — Builder */}

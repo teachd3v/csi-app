@@ -1,73 +1,8 @@
-// Shared glass UI + charts for Sistem CSI
+import { useState } from 'react';
 
-const { useState, useEffect, useRef, useMemo } = React;
-
-// ---------- Glass primitives ----------
-
-function Glass({ children, className = "", style = {}, hover = false, onClick, ...rest }) {
-  return (
-    <div
-      onClick={onClick}
-      className={`csi-glass ${hover ? "csi-glass--hover" : ""} ${className}`}
-      style={style}
-      {...rest}
-    >
-      {children}
-    </div>
-  );
-}
-
-function Pill({ children, tone = "blue", className = "" }) {
-  const tones = {
-    blue: { bg: "rgba(30, 58, 138, 0.12)", color: "#1e3a8a", border: "rgba(30, 58, 138, 0.25)" },
-    amber: { bg: "rgba(234, 179, 8, 0.18)", color: "#854d0e", border: "rgba(234, 179, 8, 0.4)" },
-    green: { bg: "rgba(16, 185, 129, 0.15)", color: "#065f46", border: "rgba(16, 185, 129, 0.3)" },
-    white: { bg: "rgba(255,255,255,0.55)", color: "#1e293b", border: "rgba(255,255,255,0.6)" },
-  };
-  const t = tones[tone] || tones.blue;
-  return (
-    <span
-      className={`csi-pill ${className}`}
-      style={{ background: t.bg, color: t.color, borderColor: t.border }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function Btn({ children, kind = "primary", icon, onClick, className = "", ...rest }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`csi-btn csi-btn--${kind} ${className}`}
-      {...rest}
-    >
-      {icon && <span className="csi-btn__icon">{icon}</span>}
-      <span>{children}</span>
-    </button>
-  );
-}
-
-// ---------- Animated mesh background ----------
-
-function MeshBackground({ intensity = "heavy" }) {
-  return (
-    <div className="csi-mesh" data-intensity={intensity}>
-      <div className="csi-mesh__blob csi-mesh__blob--a" />
-      <div className="csi-mesh__blob csi-mesh__blob--b" />
-      <div className="csi-mesh__blob csi-mesh__blob--c" />
-      <div className="csi-mesh__blob csi-mesh__blob--d" />
-      <div className="csi-mesh__grain" />
-    </div>
-  );
-}
-
-// ---------- Charts ----------
-
-// Bar chart for dimensions: performance vs importance
-function BarChart({ data, maxValue = 5, height = 220 }) {
+export function BarChart({ data, maxValue = 5, height = 220 }) {
   const [hover, setHover] = useState(null);
-  const W = 100; // percent-based
+  const W = 100;
   const padX = 6;
   const innerW = W - padX * 2;
   const barGroupW = innerW / data.length;
@@ -76,7 +11,6 @@ function BarChart({ data, maxValue = 5, height = 220 }) {
   return (
     <div className="csi-chart">
       <svg viewBox={`0 0 100 ${height / 4}`} preserveAspectRatio="none" style={{ width: "100%", height }}>
-        {/* gridlines */}
         {[0.25, 0.5, 0.75, 1].map((g) => (
           <line
             key={g}
@@ -133,8 +67,7 @@ function BarChart({ data, maxValue = 5, height = 220 }) {
   );
 }
 
-// Donut chart for likert distribution
-function DonutChart({ segments, size = 200, thickness = 28, centerLabel, centerSub }) {
+export function DonutChart({ segments, size = 200, thickness = 28, centerLabel, centerSub }) {
   const [hover, setHover] = useState(null);
   const total = segments.reduce((s, x) => s + x.value, 0);
   const r = size / 2 - thickness / 2 - 4;
@@ -183,8 +116,7 @@ function DonutChart({ segments, size = 200, thickness = 28, centerLabel, centerS
   );
 }
 
-// Sparkline — small trend
-function Sparkline({ data, color = "#1e3a8a", height = 40, fill = true }) {
+export function Sparkline({ data, color = "#1e3a8a", height = 40, fill = true }) {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -214,8 +146,7 @@ function Sparkline({ data, color = "#1e3a8a", height = 40, fill = true }) {
   );
 }
 
-// Radial gauge for the big CSI score
-function ScoreGauge({ score, category, size = 240 }) {
+export function ScoreGauge({ score, category, size = 240 }) {
   const pct = parseFloat(score) / 100;
   const r = size / 2 - 18;
   const cx = size / 2;
@@ -249,56 +180,3 @@ function ScoreGauge({ score, category, size = 240 }) {
     </div>
   );
 }
-
-// Confetti — vanilla canvas
-function fireConfetti() {
-  const canvas = document.getElementById("csi-confetti");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = canvas.offsetWidth * dpr;
-  canvas.height = canvas.offsetHeight * dpr;
-  ctx.scale(dpr, dpr);
-  const W = canvas.offsetWidth;
-  const H = canvas.offsetHeight;
-  const colors = ["#1e3a8a", "#3b82f6", "#eab308", "#fbbf24", "#10b981", "#f97316"];
-  const N = 140;
-  const parts = Array.from({ length: N }).map(() => ({
-    x: W / 2 + (Math.random() - 0.5) * 100,
-    y: H / 2 - 80 + (Math.random() - 0.5) * 40,
-    vx: (Math.random() - 0.5) * 12,
-    vy: -Math.random() * 14 - 6,
-    g: 0.35 + Math.random() * 0.2,
-    size: 4 + Math.random() * 6,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    rot: Math.random() * Math.PI * 2,
-    vr: (Math.random() - 0.5) * 0.3,
-    life: 0,
-  }));
-  let raf;
-  const tick = () => {
-    ctx.clearRect(0, 0, W, H);
-    let alive = 0;
-    parts.forEach((p) => {
-      p.vy += p.g;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.rot += p.vr;
-      p.life++;
-      if (p.y < H + 20) alive++;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-      ctx.restore();
-    });
-    if (alive > 0) raf = requestAnimationFrame(tick);
-    else ctx.clearRect(0, 0, W, H);
-  };
-  tick();
-}
-
-Object.assign(window, {
-  Glass, Pill, Btn, MeshBackground, BarChart, DonutChart, Sparkline, ScoreGauge, fireConfetti,
-});
