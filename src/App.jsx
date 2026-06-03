@@ -86,6 +86,7 @@ function AppContent() {
                     questions={sharedQuestions} 
                     user={user} 
                     loading={loadingInstruments}
+                    onLogout={handleLogout}
                   />
                 ) : (
                   <Navigate to="/login" />
@@ -96,7 +97,7 @@ function AppContent() {
               path="/dashboard" 
               element={
                 user && user.role === 'superadmin' ? (
-                  <DashboardScreen onNav={handleNav} />
+                  <DashboardScreen onNav={handleNav} onLogout={handleLogout} />
                 ) : (
                   <Navigate to="/login" />
                 )

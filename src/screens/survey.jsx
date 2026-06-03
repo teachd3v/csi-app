@@ -6,7 +6,7 @@ import { api } from '../utils/api'
 const EMOJIS = ["😠", "😟", "😐", "🙂", "😄"];
 const COLORS = ["#ef4444", "#f97316", "#a3a3a3", "#3b82f6", "#10b981"];
 
-function SurveyScreen({ onNav, questions, user, loading }) {
+function SurveyScreen({ onNav, questions, user, loading, onLogout }) {
   const totalSteps = questions.length;
   
   // Load initial state from sessionStorage
@@ -67,7 +67,7 @@ function SurveyScreen({ onNav, questions, user, loading }) {
 
   // Jika user sudah pernah selesai mengisi di sesi ini, langsung ke halaman Done
   if (alreadyCompleted) {
-    return <SurveyDone onNav={onNav} answers={{}} questions={[]} user={user} isAlreadySubmitted={true} />;
+    return <SurveyDone onNav={onNav} answers={{}} questions={[]} user={user} isAlreadySubmitted={true} onLogout={onLogout} />;
   }
 
   if (!q) return null;
@@ -123,7 +123,7 @@ function SurveyScreen({ onNav, questions, user, loading }) {
   };
 
   if (done) {
-    return <SurveyDone onNav={onNav} answers={answers} questions={questions} user={user} />;
+    return <SurveyDone onNav={onNav} answers={answers} questions={questions} user={user} onLogout={onLogout} />;
   }
 
   return (
@@ -131,6 +131,7 @@ function SurveyScreen({ onNav, questions, user, loading }) {
       <MobileNav 
         title={`Survey ${user.program}`} 
         onNav={onNav}
+        onLogout={onLogout}
       />
 
       <div className="csi-survey__progress-wrap">

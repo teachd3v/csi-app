@@ -12,7 +12,7 @@ export function MeshBackground({ intensity = "heavy" }) {
   );
 }
 
-export function MobileNav({ title, onNav }) {
+export function MobileNav({ title, onNav, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const handleNav = (target) => {
@@ -42,6 +42,24 @@ export function MobileNav({ title, onNav }) {
       </div>
       
       <div className="csi-nav__right">
+        {onLogout && (
+          <button 
+            onClick={onLogout} 
+            style={{ 
+              marginRight: '12px', 
+              background: 'rgba(239, 68, 68, 0.1)', 
+              color: '#ef4444', 
+              border: 'none', 
+              padding: '6px 12px', 
+              borderRadius: '6px', 
+              fontSize: '12px', 
+              fontWeight: '600', 
+              cursor: 'pointer' 
+            }}
+          >
+            Logout
+          </button>
+        )}
         <button className="csi-nav__burger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           ☰
         </button>
@@ -51,6 +69,9 @@ export function MobileNav({ title, onNav }) {
         <a href="#" className={title === "Sistem CSI" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("landing"); }}>Beranda</a>
         <a href="#" className={title === "Survey CSI" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("survey"); }}>Survey</a>
         <a href="#" className={title === "Dashboard" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("dashboard"); }}>Dashboard</a>
+        {onLogout && (
+          <a href="#" style={{ color: '#ef4444' }} onClick={(e) => { e.preventDefault(); onLogout(); }}>Logout</a>
+        )}
       </nav>
     </header>
   );
