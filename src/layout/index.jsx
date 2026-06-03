@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export function MeshBackground({ intensity = "heavy" }) {
   return (
     <div className="csi-mesh" data-intensity={intensity}>
