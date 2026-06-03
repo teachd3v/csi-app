@@ -4,7 +4,6 @@ import { api } from '../utils/api'
 
 function LandingScreen({ onNav }) {
   const [hovered, setHovered] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,40 +22,6 @@ function LandingScreen({ onNav }) {
 
   return (
     <div className="csi-page csi-landing">
-      {/* Top nav */}
-      <header className={`csi-nav ${mobileMenuOpen ? "menu-open" : ""}`}>
-        <div className="csi-nav__brand">
-          <div className="csi-nav__logo">
-            <svg viewBox="0 0 32 32" width="28" height="28">
-              <defs>
-                <linearGradient id="brand-grad" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#1e3a8a" />
-                  <stop offset="100%" stopColor="#eab308" />
-                </linearGradient>
-              </defs>
-              <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#brand-grad)" />
-              <path d="M10 18 L14 22 L22 12" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <div>
-            <div className="csi-nav__name">Sistem CSI</div>
-            <div className="csi-nav__sub">Customer Satisfaction Index</div>
-          </div>
-        </div>
-        <button
-          className="csi-nav__burger"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          title="Toggle menu"
-        >
-          ☰
-        </button>
-        <nav className={`csi-nav__links ${mobileMenuOpen ? "is-open" : ""}`}>
-          <a href="#" className="is-active" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("landing"); }}>Beranda</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("survey"); }}>Survey</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("dashboard"); }}>Dashboard</a>
-        </nav>
-      </header>
-
       {/* Hero */}
       <section className="csi-hero">
         <div className="csi-hero__copy">
@@ -76,9 +41,6 @@ function LandingScreen({ onNav }) {
           <div className="csi-hero__cta">
             <Btn kind="primary" onClick={() => onNav("survey")}>
               Mulai Survey →
-            </Btn>
-            <Btn kind="secondary" onClick={() => onNav("dashboard")}>
-              Lihat Dashboard
             </Btn>
           </div>
 

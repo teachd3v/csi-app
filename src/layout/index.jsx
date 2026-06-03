@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 export function MeshBackground({ intensity = "heavy" }) {
   return (
     <div className="csi-mesh" data-intensity={intensity}>
@@ -12,16 +10,9 @@ export function MeshBackground({ intensity = "heavy" }) {
   );
 }
 
-export function MobileNav({ title, onNav, onLogout }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  const handleNav = (target) => {
-    setMobileMenuOpen(false);
-    onNav(target);
-  };
-
+export function MobileNav({ title, onLogout }) {
   return (
-    <header className={`csi-nav csi-nav--internal ${mobileMenuOpen ? "menu-open" : ""}`}>
+    <header className="csi-nav csi-nav--internal">
       <div className="csi-nav__left">
         <div className="csi-nav__logo">
           <svg viewBox="0 0 32 32" width="28" height="28">
@@ -52,19 +43,7 @@ export function MobileNav({ title, onNav, onLogout }) {
             <span className="csi-nav__logout-text">Logout</span>
           </button>
         )}
-        <button className="csi-nav__burger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          ☰
-        </button>
       </div>
-
-      <nav className={`csi-nav__links ${mobileMenuOpen ? "is-open" : ""}`}>
-        <a href="#" className={title === "Sistem CSI" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("landing"); }}>Beranda</a>
-        <a href="#" className={title === "Survey CSI" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("survey"); }}>Survey</a>
-        <a href="#" className={title === "Dashboard" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("dashboard"); }}>Dashboard</a>
-        {onLogout && (
-          <a href="#" style={{ color: '#ef4444' }} onClick={(e) => { e.preventDefault(); onLogout(); }}>Logout</a>
-        )}
-      </nav>
     </header>
   );
 }
