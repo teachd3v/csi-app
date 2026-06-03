@@ -44,20 +44,12 @@ export function MobileNav({ title, onNav, onLogout }) {
       <div className="csi-nav__right">
         {onLogout && (
           <button 
+            className="csi-nav__logout-btn"
             onClick={onLogout} 
-            style={{ 
-              marginRight: '12px', 
-              background: 'rgba(239, 68, 68, 0.1)', 
-              color: '#ef4444', 
-              border: 'none', 
-              padding: '6px 12px', 
-              borderRadius: '6px', 
-              fontSize: '12px', 
-              fontWeight: '600', 
-              cursor: 'pointer' 
-            }}
+            title="Logout"
           >
-            Logout
+            <span className="csi-nav__logout-icon">🚪</span>
+            <span className="csi-nav__logout-text">Logout</span>
           </button>
         )}
         <button className="csi-nav__burger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>

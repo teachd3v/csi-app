@@ -342,6 +342,27 @@ html, body {
   color: var(--csi-blue);
 }
 
+.csi-nav__logout-btn {
+  margin-right: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.csi-nav__logout-icon { display: none; }
+@media (max-width: 767px) {
+  .csi-nav__logout-text { display: none; }
+  .csi-nav__logout-icon { display: inline; font-size: 16px; }
+  .csi-nav__logout-btn { padding: 6px 8px; margin-right: 8px; }
+}
+
 /* Mobile: hamburger menu */
 @media (max-width: 767px) {
   .csi-nav {
