@@ -64,7 +64,7 @@ function AppContent() {
 
   const handleLogout = () => {
     setUser(null);
-    sessionStorage.removeItem("csi_user");
+    sessionStorage.clear(); // Hapus seluruh data sesi agar bener-benar fresh
     navigate("/");
   };
 
