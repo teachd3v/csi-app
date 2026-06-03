@@ -4,7 +4,7 @@ import { Glass, Pill, Btn, MobileNav, BarChart, DonutChart, ScoreGauge, Sparklin
 import { csiCategory, LIKERT_PERFORMANCE, getPerformanceCategory } from '../data'
 import { api } from '../utils/api'
 
-function DashboardScreen({ onNav }) {
+function DashboardScreen({ onNav, onLogout }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("overview");
@@ -53,7 +53,7 @@ function DashboardScreen({ onNav }) {
   if (loading && !data) {
     return (
       <div className="csi-page csi-dash">
-        <MobileNav title="Dashboard" onNav={onNav} />
+        <MobileNav title="Dashboard" onNav={onNav} onLogout={onLogout} />
         <div className="csi-filters">
            {[1,2,3,4,5].map(i => <Skeleton key={i} className="csi-filter-group" style={{ height: '40px' }} />)}
         </div>
@@ -84,6 +84,7 @@ function DashboardScreen({ onNav }) {
       <MobileNav 
         title="Dashboard Analytics" 
         onNav={onNav}
+        onLogout={onLogout}
       />
 
       {/* 1. Filter Bar */}

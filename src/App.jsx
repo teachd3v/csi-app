@@ -10,7 +10,7 @@ import { ErrorBoundary } from './ErrorBoundary'
 import { api } from './utils/api'
 
 function AppContent() {
-  const [user, setUser] = useState(() => {
+  const [user, setUser] = useState(() => { 
     const saved = sessionStorage.getItem("csi_user");
     return saved ? JSON.parse(saved) : null;
   });
