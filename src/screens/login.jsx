@@ -16,7 +16,9 @@ function LoginScreen({ onLoginSuccess }) {
     const res = await api.login(id, password);
     
     if (res.status === 'success') {
-      onLoginSuccess(res.user);
+      // Pass both user data and the already_completed flag
+      onLoginSuccess(res.user, res.already_completed);
+      
       // Smart Routing berdasarkan Role
       if (res.user.role === 'superadmin') {
         window.location.href = '/dashboard';

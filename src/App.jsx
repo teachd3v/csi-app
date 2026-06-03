@@ -50,10 +50,16 @@ function AppContent() {
     loadInstruments();
   }, [user?.program]);
 
-  const handleLoginSuccess = (userData) => {
+  const handleLoginSuccess = (userData, alreadyCompleted) => {
     setUser(userData);
     sessionStorage.setItem("csi_user", JSON.stringify(userData));
-    navigate("/survey");
+    
+    // Jika dari backend dikonfirmasi sudah mengisi, langsung tanam flag selesai
+    if (alreadyCompleted) {
+      sessionStorage.setItem(`csi_survey_completed_${userData.id}`, 'true');
+    }
+
+    // Navigasi sudah dihandle di dalam komponen LoginScreen melalui window.location
   };
 
   const handleLogout = () => {
