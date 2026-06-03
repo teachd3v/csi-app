@@ -54,3 +54,16 @@ export function csiCategory(score) {
   if (s >= 35) return { label: "Kurang Puas", color: "#f97316" };
   return { label: "Tidak Puas", color: "#ef4444" };
 }
+
+/**
+ * Interpretasi Skor Kinerja (Performance) Skala 0-4
+ * Interval: 4 / 5 kategori = 0.8 per kategori
+ */
+export function getPerformanceCategory(score) {
+  const s = parseFloat(score);
+  if (s >= 3.20) return { label: "Sangat Puas", color: "#10b981" };
+  if (s >= 2.40) return { label: "Puas", color: "#3b82f6" };
+  if (s >= 1.60) return { label: "Cukup Puas", color: "#eab308" };
+  if (s >= 0.80) return { label: "Kurang Puas", color: "#f97316" };
+  return { label: "Tidak Puas", color: "#ef4444" };
+}

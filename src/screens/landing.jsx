@@ -1,13 +1,25 @@
-// Landing page — "The Educator"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Pill, Glass, Btn, Sparkline } from '../components'
-import { DIM_SCORES, INSTRUMENTS } from '../data'
+import { api } from '../utils/api'
 
-
-
-function LandingScreen({ onNav, activeInstrument, onInstrumentChange }) {
+function LandingScreen({ onNav }) {
   const [hovered, setHovered] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSummary = async () => {
+      const res = await api.getDashboardSummary();
+      if (res.status === 'success') {
+        setSummary(res.data);
+      }
+      setLoading(false);
+    };
+    loadSummary();
+  }, []);
+
+  const Skeleton = ({ className, style }) => <div className={`csi-skeleton ${className}`} style={style} />;
 
   return (
     <div className="csi-page csi-landing">
@@ -42,7 +54,6 @@ function LandingScreen({ onNav, activeInstrument, onInstrumentChange }) {
           <a href="#" className="is-active" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("landing"); }}>Beranda</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("survey"); }}>Survey</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("dashboard"); }}>Dashboard</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onNav("admin"); }}>Admin</a>
         </nav>
       </header>
 
@@ -52,25 +63,6 @@ function LandingScreen({ onNav, activeInstrument, onInstrumentChange }) {
           <Pill tone="amber">
             <span className="csi-dot" /> Versi 2.4 · Riset Akademik
           </Pill>
-
-          <div className="csi-instrument-selector">
-            <span className="csi-instrument-selector__label">Pilih Instrumen:</span>
-            {Object.entries(INSTRUMENTS).map(([key, inst]) => (
-              <button
-                key={key}
-                className={`csi-instrument-selector__btn ${activeInstrument === key ? "is-active" : ""}`}
-                onClick={() => {
-                  onInstrumentChange(key);
-                  // Reset to landing when instrument changes
-                  if (activeInstrument !== key) {
-                    onNav("landing");
-                  }
-                }}
-              >
-                {inst.name}
-              </button>
-            ))}
-          </div>
 
           <h1 className="csi-hero__title">
             Ukur kepuasan pengguna <br />
@@ -92,12 +84,12 @@ function LandingScreen({ onNav, activeInstrument, onInstrumentChange }) {
 
           <div className="csi-hero__metrics">
             <div>
-              <div className="csi-hero__metric-num">312</div>
-              <div className="csi-hero__metric-lbl">Responden bulan ini</div>
+              {loading ? <Skeleton className="csi-skeleton--num" /> : <div className="csi-hero__metric-num">{Math.round(summary?.total_responden || 0)}</div>}
+              <div className="csi-hero__metric-lbl">Responden saat ini</div>
             </div>
             <div>
-              <div className="csi-hero__metric-num">87,4<span style={{ fontSize: "0.5em", color: "#64748b" }}>%</span></div>
-              <div className="csi-hero__metric-lbl">CSI saat ini</div>
+              {loading ? <Skeleton className="csi-skeleton--num" /> : <div className="csi-hero__metric-num">{Math.round(summary?.csi_score || 0)}<span style={{ fontSize: "0.5em", color: "#64748b" }}>%</span></div>}
+              <div className="csi-hero__metric-lbl">CSI Global</div>
             </div>
             <div>
               <div className="csi-hero__metric-num">5</div>
@@ -118,19 +110,31 @@ function LandingScreen({ onNav, activeInstrument, onInstrumentChange }) {
           <div className="csi-hero__preview-grid">
             <Glass className="csi-hero__mini" hover>
               <div className="csi-hero__mini-lbl">CSI Score</div>
-              <div className="csi-hero__mini-num">87,4</div>
-              <div className="csi-hero__mini-trend">
-                <Sparkline data={[82, 83, 81, 85, 84, 86, 87.4]} color="#1e3a8a" height={32} />
-              </div>
-              <Pill tone="green">↑ +2,1 dari bulan lalu</Pill>
+              {loading ? (
+                <div style={{ padding: '10px 0' }}><Skeleton className="csi-skeleton--num" /><Skeleton className="csi-skeleton--chart" /></div>
+              ) : (
+                <>
+                  <div className="csi-hero__mini-num">{Math.round(summary?.csi_score || 0)}</div>
+                  <div className="csi-hero__mini-trend">
+                    <Sparkline data={summary?.trend_csi} color="#1e3a8a" height={32} />
+                  </div>
+                </>
+              )}
+              <Pill tone="blue">Skor Kepuasan Kumulatif</Pill>
             </Glass>
             <Glass className="csi-hero__mini" hover>
               <div className="csi-hero__mini-lbl">Responden</div>
-              <div className="csi-hero__mini-num" style={{ color: "#854d0e" }}>312</div>
-              <div className="csi-hero__mini-trend">
-                <Sparkline data={[210, 230, 245, 260, 280, 300, 312]} color="#eab308" height={32} />
-              </div>
-              <Pill tone="amber">Target 400 / bulan</Pill>
+              {loading ? (
+                <div style={{ padding: '10px 0' }}><Skeleton className="csi-skeleton--num" /><Skeleton className="csi-skeleton--chart" /></div>
+              ) : (
+                <>
+                  <div className="csi-hero__mini-num" style={{ color: "#854d0e" }}>{Math.round(summary?.total_responden || 0)}</div>
+                  <div className="csi-hero__mini-trend">
+                    <Sparkline data={summary?.trend_responden} color="#eab308" height={32} />
+                  </div>
+                </>
+              )}
+              <Pill tone="amber">Target: {Math.round(summary?.target_responden || 0)} Responden</Pill>
             </Glass>
             <Glass className="csi-hero__dim-prev">
               <div className="csi-hero__dim-prev-head">
@@ -138,18 +142,28 @@ function LandingScreen({ onNav, activeInstrument, onInstrumentChange }) {
                 <Pill tone="white">Live</Pill>
               </div>
               <div className="csi-hero__dim-list">
-                {DIM_SCORES.map((d) => (
-                  <div key={d.id} className="csi-hero__dim-row">
-                    <span className="csi-hero__dim-name">{d.name}</span>
-                    <div className="csi-hero__dim-bar">
-                      <div
-                        className="csi-hero__dim-fill"
-                        style={{ width: `${(d.performance / 5) * 100}%` }}
-                      />
+                {loading ? (
+                  [1,2,3,4,5].map(i => (
+                    <div key={i} className="csi-hero__dim-row" style={{ gap: '15px' }}>
+                      <Skeleton className="csi-skeleton--text" style={{ width: '30%' }} />
+                      <Skeleton className="csi-skeleton--text" style={{ flex: 1 }} />
+                      <Skeleton className="csi-skeleton--text" style={{ width: '10%' }} />
                     </div>
-                    <span className="csi-hero__dim-num">{d.performance.toFixed(2)}</span>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  (summary?.dimensi || []).map((d) => (
+                    <div key={d.id} className="csi-hero__dim-row">
+                      <span className="csi-hero__dim-name">{d.name}</span>
+                      <div className="csi-hero__dim-bar">
+                        <div
+                          className="csi-hero__dim-fill"
+                          style={{ width: `${(d.performance / 4) * 100}%` }}
+                        />
+                      </div>
+                      <span className="csi-hero__dim-num">{d.performance.toFixed(2)}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </Glass>
           </div>
@@ -282,10 +296,9 @@ function LandingScreen({ onNav, activeInstrument, onInstrumentChange }) {
         <Glass className="csi-cta">
           <div>
             <h3>Siap mengukur kepuasan pengguna Anda?</h3>
-            <p>Mulai dengan instrumen default atau atur sendiri di Admin Setup.</p>
+            <p>Silakan login untuk memulai mengisi instrumen survey.</p>
           </div>
           <div className="csi-cta__btns">
-            <Btn kind="secondary" onClick={() => onNav("admin")}>Atur Instrumen</Btn>
             <Btn kind="primary" onClick={() => onNav("survey")}>Mulai Survey →</Btn>
           </div>
         </Glass>

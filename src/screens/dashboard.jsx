@@ -1,17 +1,79 @@
-// Dashboard screen — "The Analyst"
-import { useState } from 'react'
+// Dashboard screen — "The Analyst" (Real-time Version v2)
+import { useState, useEffect } from 'react'
 import { Glass, Pill, Btn, MobileNav, BarChart, DonutChart, ScoreGauge, Sparkline } from '../components'
-import { DIM_SCORES, SCORE_DISTRIBUTION, LIKERT_PERFORMANCE, CSI_SCORE, WORDS, FEEDBACK, csiCategory, getInstrument, flattenDimensions } from '../data'
+import { csiCategory, LIKERT_PERFORMANCE, getPerformanceCategory } from '../data'
+import { api } from '../utils/api'
 
-
-
-function DashboardScreen({ onNav, activeInstrument }) {
-  const [hoverDim, setHoverDim] = useState(null);
+function DashboardScreen({ onNav }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("overview");
-  const cat = csiCategory(CSI_SCORE);
-  const instrument = getInstrument(activeInstrument);
+  const [hoverDim, setHoverDim] = useState(null);
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    program: 'ALL',
+    jenis_kelamin: 'ALL',
+    angkatan: 'ALL',
+    wilayah: 'ALL',
+    asal_sekolah: 'ALL'
+  });
 
-  const distSegments = SCORE_DISTRIBUTION.map((v, i) => ({
+  const fetchDashboard = async () => {
+    setLoading(true);
+    const res = await api.getFullDashboardData(filters);
+    if (res.status === 'success') {
+      setData(res.data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [filters]);
+
+  const handleFilterChange = (key, val) => {
+    setFilters(prev => {
+      const next = { ...prev, [key]: val };
+      // Cascading logic: reset children
+      if (key === 'program') {
+        next.angkatan = 'ALL';
+        next.wilayah = 'ALL';
+        next.asal_sekolah = 'ALL';
+      }
+      if (key === 'wilayah') {
+        next.asal_sekolah = 'ALL';
+      }
+      return next;
+    });
+  };
+
+  const Skeleton = ({ className, style }) => <div className={`csi-skeleton ${className}`} style={style} />;
+
+  if (loading && !data) {
+    return (
+      <div className="csi-page csi-dash">
+        <MobileNav title="Dashboard" onNav={onNav} />
+        <div className="csi-filters">
+           {[1,2,3,4,5].map(i => <Skeleton key={i} className="csi-filter-group" style={{ height: '40px' }} />)}
+        </div>
+        <div className="csi-dash__top-grid">
+          <Glass className="csi-dash__gauge-card"><Skeleton className="csi-skeleton--num" style={{ height: '200px', width: '100%' }} /></Glass>
+          <div className="csi-dash__kpis">
+            {[1, 2, 3, 4].map(i => (
+              <Glass key={i} className="csi-dash__kpi"><Skeleton className="csi-skeleton--num" style={{ width: '100%' }} /></Glass>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const dashData = data || {};
+  const cat = csiCategory(dashData.csi_score || 0);
+  const perfCat = getPerformanceCategory(dashData.avg_performance || 0);
+  
+  const distSegments = (dashData.distribution || [0, 0, 0, 0, 0]).map((v, i) => ({
     value: v,
     label: LIKERT_PERFORMANCE[i].label,
     color: LIKERT_PERFORMANCE[i].color,
@@ -20,43 +82,104 @@ function DashboardScreen({ onNav, activeInstrument }) {
   return (
     <div className="csi-page csi-dash">
       <MobileNav 
-        title="Dashboard" 
+        title="Dashboard Analytics" 
         onNav={onNav}
       />
 
-      {/* Top row: gauge + KPI cards */}
+      {/* 1. Filter Bar */}
+      <div className="csi-filters">
+        <FilterGroup label="Program" value={filters.program} options={dashData.filterOptions?.programs} onChange={v => handleFilterChange('program', v)} />
+        <FilterGroup label="Gender" value={filters.jenis_kelamin} options={dashData.filterOptions?.genders} onChange={v => handleFilterChange('jenis_kelamin', v)} />
+        <FilterGroup label="Angkatan" value={filters.angkatan} options={dashData.filterOptions?.cohorts} onChange={v => handleFilterChange('angkatan', v)} />
+        <FilterGroup label="Wilayah" value={filters.wilayah} options={dashData.filterOptions?.regions} onChange={v => handleFilterChange('wilayah', v)} />
+        <FilterGroup label="Asal Sekolah" value={filters.asal_sekolah} options={dashData.filterOptions?.origins} onChange={v => handleFilterChange('asal_sekolah', v)} />
+      </div>
+
+      {/* 2. Metrics Grid */}
       <div className="csi-dash__top-grid">
         <Glass className="csi-dash__gauge-card">
           <div className="csi-dash__card-head">
             <span>Skor CSI Total</span>
-            <Pill tone="white">↑ +2,1</Pill>
+            <Pill tone="white">Real-time</Pill>
           </div>
-          <ScoreGauge score={CSI_SCORE} category={cat} />
+          <ScoreGauge score={Math.round(dashData.csi_score || 0)} category={cat} />
           <div className="csi-dash__gauge-foot">
-            Berdasarkan <b>312 responden</b> · <b>12 atribut</b> · <b>5 dimensi</b>
+            Berdasarkan <b>{dashData.total_responden} responden</b> · <b>5 dimensi</b>
           </div>
         </Glass>
 
         <div className="csi-dash__kpis">
           {[
-            { lbl: "Responden", num: "312", trend: [210, 230, 245, 260, 280, 300, 312], pill: "↑ 18%", tone: "blue", color: "#1e3a8a" },
-            { lbl: "Completion Rate", num: "94,2%", trend: [88, 89, 91, 90, 92, 93, 94.2], pill: "Stabil", tone: "green", color: "#10b981" },
-            { lbl: "Avg. Performance", num: "4,34", trend: [4.1, 4.2, 4.15, 4.25, 4.3, 4.32, 4.34], pill: "↑ 0,12", tone: "amber", color: "#eab308" },
-            { lbl: "Atribut < target", num: "2", trend: [4, 4, 3, 3, 3, 2, 2], pill: "Membaik", tone: "green", color: "#f97316" },
+            { 
+              lbl: "Total Responden", 
+              num: dashData.total_responden || 0, 
+              trend: dashData.trend_responden || [0,0,0,0,0,0,0], 
+              pill: `Target: ${dashData.target_responden || 0}`, 
+              tone: "blue", 
+              color: "#1e3a8a",
+              desc: "Representasi jumlah sampel data yang dianalisis saat ini."
+            },
+            { 
+              lbl: "Avg. Performance", 
+              num: (dashData.avg_performance || 0).toFixed(2), 
+              trend: dashData.trend_csi || [0,0,0,0,0,0,0], 
+              pill: perfCat.label, 
+              tone: "custom",
+              customColor: perfCat.color,
+              color: perfCat.color,
+              desc: "Tingkat kualitas layanan aktual yang dirasakan responden (Skala 0-4)."
+            },
+            { 
+              lbl: "Atribut < Target", 
+              num: dashData.low_attributes || 0, 
+              trend: [5,4,3,2,1,0, dashData.low_attributes || 0], 
+              pill: "Perhatian", 
+              tone: "amber", 
+              color: "#f97316",
+              desc: "Aspek layanan dengan skor di bawah standar minimal (3.8)."
+            },
+            { 
+              lbl: "Total Feedback", 
+              num: dashData.qualitative?.length || 0, 
+              trend: [0, 1, 2, 3, 5, 8, dashData.qualitative?.length || 0], 
+              pill: "Kualitatif", 
+              tone: "blue", 
+              color: "#3b82f6",
+              desc: "Volume pertanyaan kualitatif yang telah mendapatkan respon."
+            },
           ].map((k, i) => (
-            <Glass key={i} className="csi-dash__kpi" hover>
+            <Glass key={i} className="csi-dash__kpi" hover style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="csi-dash__kpi-head">
                 <span>{k.lbl}</span>
-                <Pill tone={k.tone}>{k.pill}</Pill>
+                {k.tone === "custom" ? (
+                   <div className="csi-pill" style={{ color: k.color, borderColor: k.color, background: `${k.color}15` }}>
+                     <span className="csi-dot" style={{ background: k.color }} /> {k.pill}
+                   </div>
+                ) : (
+                  <Pill tone={k.tone}>{k.pill}</Pill>
+                )}
               </div>
-              <div className="csi-dash__kpi-num">{k.num}</div>
-              <Sparkline data={k.trend} color={k.color} height={36} />
+              <div className="csi-dash__kpi-num" style={{ marginBottom: '4px' }}>{loading ? '...' : k.num}</div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <Sparkline data={k.trend} color={k.color} height={36} />
+              </div>
+              <div style={{ 
+                marginTop: '12px', 
+                paddingTop: '10px', 
+                borderTop: '1px solid rgba(30,58,138,0.05)',
+                fontSize: '11px',
+                color: 'var(--csi-muted)',
+                lineHeight: '1.4'
+              }}>
+                <b>Interpretasi:</b><br />
+                {k.desc}
+              </div>
             </Glass>
           ))}
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* 3. Tabs */}
       <div className="csi-dash__tabs">
         {[
           { k: "overview", l: "Overview" },
@@ -74,47 +197,162 @@ function DashboardScreen({ onNav, activeInstrument }) {
       </div>
 
       {tab === "overview" && (
-        <div className="csi-dash__row">
-          <Glass className="csi-dash__bar-card">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div className="csi-dash__row">
+            <Glass className="csi-dash__bar-card">
+              <div className="csi-dash__card-head">
+                <div>
+                  <h3>Skor per Dimensi</h3>
+                  <span>Performance vs Importance · skala Likert 0–4</span>
+                </div>
+                <Pill tone="blue">5 dimensi</Pill>
+              </div>
+              {loading ? <Skeleton className="csi-skeleton--chart" style={{ height: '300px' }} /> : <BarChart data={dashData.dimensi} maxValue={4} />}
+            </Glass>
+
+            <Glass className="csi-dash__donut-card">
+              <div className="csi-dash__card-head">
+                <h3>Distribusi Jawaban</h3>
+                <Pill tone="amber">{dashData.distribution?.reduce((a, b) => a + b, 0)} poin</Pill>
+              </div>
+              <DonutChart
+                segments={distSegments}
+                centerLabel={`${(dashData.distribution?.[3] || 0) + (dashData.distribution?.[4] || 0)}`}
+                centerSub="Puas + S. Puas"
+              />
+              <div className="csi-dash__legend">
+                {distSegments.map((s, i) => (
+                  <div key={i} className="csi-dash__legend-row">
+                    <i style={{ background: s.color }} />
+                    <span>{s.label}</span>
+                    <b>{s.value}</b>
+                  </div>
+                ))}
+              </div>
+            </Glass>
+          </div>
+
+          <Glass style={{ padding: '32px' }}>
             <div className="csi-dash__card-head">
               <div>
-                <h3>Skor per Dimensi</h3>
-                <span>Performance vs Importance · skala Likert 1–5</span>
+                <h3>Detail Sebaran Atribut</h3>
+                <span>Sebaran kepuasan untuk setiap butir pernyataan</span>
               </div>
-              <Pill tone="blue">5 dimensi</Pill>
+              <Pill tone="white">Real-time Stats</Pill>
             </div>
-            <BarChart data={DIM_SCORES} />
-          </Glass>
 
-          <Glass className="csi-dash__donut-card">
-            <div className="csi-dash__card-head">
-              <h3>Distribusi Jawaban</h3>
-              <Pill tone="amber">{SCORE_DISTRIBUTION.reduce((a, b) => a + b, 0)} jawaban</Pill>
-            </div>
-            <DonutChart
-              segments={distSegments}
-              centerLabel={`${SCORE_DISTRIBUTION[3] + SCORE_DISTRIBUTION[4]}`}
-              centerSub="Puas + Sangat Puas"
-            />
-            <div className="csi-dash__legend">
-              {distSegments.map((s, i) => (
-                <div key={i} className="csi-dash__legend-row">
-                  <i style={{ background: s.color }} />
-                  <span>{s.label}</span>
-                  <b>{s.value}</b>
+            {/* Legenda Warna Sebaran */}
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '12px', 
+              marginTop: '16px', 
+              padding: '12px 16px', 
+              background: 'rgba(255,255,255,0.3)', 
+              borderRadius: '8px',
+              border: '1px solid rgba(30,58,138,0.05)'
+            }}>
+              <span style={{ fontSize: '11px', color: 'var(--csi-muted)', fontWeight: '700', marginRight: '4px' }}>LEGENDA:</span>
+              {LIKERT_PERFORMANCE.map((l, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <i style={{ width: '10px', height: '10px', borderRadius: '2px', background: l.color }} />
+                  <span style={{ fontSize: '11px', color: 'var(--csi-text)' }}>{l.label}</span>
                 </div>
               ))}
+            </div>
+            
+            <div className="csi-attr-stack">
+              {loading ? (
+                [1,2,3].map(i => <Skeleton key={i} style={{ height: '60px', borderRadius: '12px' }} />)
+              ) : (
+                (dashData.attributes || []).map(attr => (
+                  <div key={attr.id} className="csi-attr-row">
+                    <div className="csi-attr-name">
+                      <Pill tone="white" style={{ fontSize: '9px', padding: '2px 6px', marginBottom: '4px' }}>{attr.dim}</Pill><br />
+                      {attr.name}
+                    </div>
+                    <div className="csi-attr-score">
+                      <div>{attr.performance.toFixed(2)}</div>
+                      {(() => {
+                        const cat = getPerformanceCategory(attr.performance);
+                        return (
+                          <div style={{ 
+                            fontSize: '9px', 
+                            color: cat.color, 
+                            fontWeight: '800', 
+                            textTransform: 'uppercase',
+                            marginTop: '4px',
+                            padding: '2px 6px',
+                            background: `${cat.color}15`,
+                            borderRadius: '4px',
+                            display: 'inline-block'
+                          }}>
+                            {cat.label}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    <div className="csi-attr-dist">
+                      {attr.dist.map((count, i) => {
+                        const pct = (count / (attr.dist.reduce((a,b)=>a+b,0) || 1)) * 100;
+                        return (
+                          <div 
+                            key={i} 
+                            className="csi-dist-segment" 
+                            style={{ 
+                              width: `${pct}%`, 
+                              background: LIKERT_PERFORMANCE[i].color,
+                              opacity: count > 0 ? 1 : 0
+                            }} 
+                            title={`${LIKERT_PERFORMANCE[i].label}: ${count} (${Math.round(pct)}%)`}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </Glass>
         </div>
       )}
+{tab === "quantitative" && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    {/* Glosarium Analisis */}
+    <Glass style={{ padding: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+        <Pill tone="blue">📊 Glosarium Analisis Kuantitatif</Pill>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+        <div style={{ fontSize: '12px', lineHeight: '1.5' }}>
+          <b style={{ color: 'var(--csi-blue)' }}>MIS (Mean Importance Score)</b><br />
+          <span style={{ color: 'var(--csi-muted)' }}>Rata-rata tingkat kepentingan/harapan responden terhadap suatu dimensi (Skala 0-4).</span>
+        </div>
+        <div style={{ fontSize: '12px', lineHeight: '1.5' }}>
+          <b style={{ color: 'var(--csi-blue)' }}>WF (Weight Factor)</b><br />
+          <span style={{ color: 'var(--csi-muted)' }}>Bobot relatif (prosentase) tingkat kepentingan suatu dimensi terhadap total seluruh dimensi.</span>
+        </div>
+        <div style={{ fontSize: '12px', lineHeight: '1.5' }}>
+          <b style={{ color: 'var(--csi-blue)' }}>MSS (Mean Satisfaction Score)</b><br />
+          <span style={{ color: 'var(--csi-muted)' }}>Rata-rata tingkat kinerja/kenyataan aktual yang dirasakan oleh responden (Skala 0-4).</span>
+        </div>
+        <div style={{ fontSize: '12px', lineHeight: '1.5' }}>
+          <b style={{ color: 'var(--csi-blue)' }}>WS (Weight Score)</b><br />
+          <span style={{ color: 'var(--csi-muted)' }}>Skor tertimbang (WF × MSS). Menunjukkan kontribusi dimensi tersebut terhadap indeks kepuasan total.</span>
+        </div>
+        <div style={{ fontSize: '12px', lineHeight: '1.5' }}>
+          <b style={{ color: 'var(--csi-blue)' }}>Status (Diagnosa)</b><br />
+          <span style={{ color: 'var(--csi-muted)' }}>Evaluasi apakah kinerja dimensi sudah memenuhi target internal (minimal 2.80 atau 70%).</span>
+        </div>
+      </div>
+    </Glass>
 
-      {tab === "quantitative" && (
-        <div className="csi-dash__quant">
-          <Glass className="csi-dash__quant-table">
+    <div className="csi-dash__quant">
+      <Glass className="csi-dash__quant-table">
+...
             <div className="csi-dash__card-head">
               <h3>Tabel Perhitungan CSI</h3>
-              <Pill tone="white">Live</Pill>
+              <Pill tone="white">Live Calculation</Pill>
             </div>
             <div className="csi-dash__tbl">
               <div className="csi-dash__tbl-head">
@@ -125,129 +363,118 @@ function DashboardScreen({ onNav, activeInstrument }) {
                 <div>WS</div>
                 <div>Status</div>
               </div>
-              {(() => {
-                const sumMIS = DIM_SCORES.reduce((s, d) => s + d.importance, 0);
-                return DIM_SCORES.map((d) => {
-                  const wf = (d.importance / sumMIS) * 100;
-                  const ws = (wf / 100) * d.performance;
-                  const ok = d.performance >= 4.3;
-                  return (
-                    <div
-                      key={d.id}
-                      className={`csi-dash__tbl-row ${hoverDim === d.id ? "is-hover" : ""}`}
-                      onMouseEnter={() => setHoverDim(d.id)}
-                      onMouseLeave={() => setHoverDim(null)}
-                    >
-                      <div><b>{d.name}</b></div>
-                      <div>{d.importance.toFixed(2)}</div>
-                      <div>{wf.toFixed(2)}%</div>
-                      <div>{d.performance.toFixed(2)}</div>
-                      <div><b>{ws.toFixed(3)}</b></div>
-                      <div>
-                        <Pill tone={ok ? "green" : "amber"}>
-                          {ok ? "✓ Memenuhi" : "⚠ Perlu perhatian"}
-                        </Pill>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-              <div className="csi-dash__tbl-sum">
-                <div>Total</div>
-                <div>{DIM_SCORES.reduce((s, d) => s + d.importance, 0).toFixed(2)}</div>
-                <div>100%</div>
-                <div>—</div>
-                <div>
-                  <b>{DIM_SCORES.reduce((s, d) => {
-                    const wf = d.importance / DIM_SCORES.reduce((x, y) => x + y.importance, 0);
-                    return s + wf * d.performance;
-                  }, 0).toFixed(3)}</b>
-                </div>
-                <div><Pill tone="amber">CSI = {CSI_SCORE}%</Pill></div>
+              {/* Info Interpretasi Status */}
+              <div style={{ padding: '10px 20px', background: 'rgba(30,58,138,0.02)', fontSize: '11px', color: 'var(--csi-muted)', borderBottom: '1px solid rgba(30,58,138,0.05)' }}>
+                💡 <b>Status Interpretasi:</b> <span style={{ color: '#065f46' }}>✓ Memenuhi</span> (Skor ≥ 2.8), <span style={{ color: '#854d0e' }}>⚠ Perlu Perhatian</span> (Skor &lt; 2.8)
               </div>
+              {(dashData.dimensi || []).map((d) => {
+                const ok = d.performance >= 2.8; 
+                return (
+                  <div
+                    key={d.id}
+                    className={`csi-dash__tbl-row ${hoverDim === d.id ? "is-hover" : ""}`}
+                    onMouseEnter={() => setHoverDim(d.id)}
+                    onMouseLeave={() => setHoverDim(null)}
+                  >
+                    <div><b>{d.name}</b></div>
+                    <div>{d.importance.toFixed(2)}</div>
+                    <div>{d.wf.toFixed(2)}%</div>
+                    <div>{d.performance.toFixed(2)}</div>
+                    <div><b>{d.ws.toFixed(3)}</b></div>
+                    <div>
+                      <Pill tone={ok ? "green" : "amber"}>
+                        {ok ? "✓ Memenuhi" : "⚠ Perlu perhatian"}
+                      </Pill>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Glass>
 
           <Glass className="csi-dash__ipa">
             <div className="csi-dash__card-head">
               <h3>IPA Quadrant</h3>
-              <span>Importance–Performance</span>
+              <span>Importance–Performance Analysis</span>
             </div>
-            <IPAQuadrant />
+            <IPAQuadrant data={dashData.dimensi || []} xThreshold={dashData.avg_importance} yThreshold={dashData.avg_performance} />
           </Glass>
         </div>
-      )}
+      </div>
+    )}
 
       {tab === "qualitative" && (
-        <div className="csi-dash__qual">
-          <Glass className="csi-dash__cloud">
-            <div className="csi-dash__card-head">
-              <h3>Word Cloud Feedback</h3>
-              <Pill tone="amber">{WORDS.length} keyword</Pill>
-            </div>
-            <WordCloud />
-          </Glass>
-
-          <Glass className="csi-dash__feedback">
-            <div className="csi-dash__card-head">
-              <h3>Feedback Terbuka</h3>
-              <span>{FEEDBACK.length} dari 312 responden</span>
-            </div>
-            <div className="csi-dash__fb-list">
-              {FEEDBACK.map((f, i) => (
-                <Glass key={i} className="csi-dash__fb" hover>
-                  <div className="csi-dash__fb-head">
-                    <div className="csi-dash__fb-avatar" style={{ background: avatarColor(f.name) }}>
-                      {f.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
-                    </div>
-                    <div>
-                      <div className="csi-dash__fb-name">{f.name}</div>
-                      <div className="csi-dash__fb-role">{f.role}</div>
-                    </div>
-                    <div className="csi-dash__fb-score">
-                      {Array.from({ length: 5 }).map((_, j) => (
-                        <span key={j} style={{ opacity: j < f.score ? 1 : 0.2 }}>★</span>
-                      ))}
-                    </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
+          {(dashData.qualitative || []).map((q, idx) => (
+            <Glass key={q.kode || idx} style={{ padding: '0', overflow: 'hidden', width: '100%' }}>
+              <div className="csi-qual-head">
+                <div className="csi-qual-q">{q.pertanyaan}</div>
+                <div className="csi-qual-meta">{q.tipe} · {q.kode}</div>
+              </div>
+              <div className="csi-qual-body" style={{ padding: '32px' }}>
+                {q.tipe === "Select" ? (
+                  <div className="csi-word-cloud" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+                    {Object.entries(q.stats || {}).map(([word, count]) => {
+                      const size = 12 + (count / (dashData.total_responden || 1)) * 40;
+                      return (
+                        <span key={word} className="csi-word-chip" style={{ fontSize: `${size}px`, opacity: 0.6 + (count / (dashData.total_responden || 1)) * 0.4 }}>
+                          {word} <b style={{ fontSize: '10px', opacity: 0.5 }}>({count})</b>
+                        </span>
+                      );
+                    })}
                   </div>
-                  <div className="csi-dash__fb-text">"{f.text}"</div>
-                </Glass>
-              ))}
-            </div>
-          </Glass>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {(q.jawaban || []).map((text, i) => (
+                      <div key={i} className="csi-esai-card" style={{ padding: '16px 24px', background: 'rgba(255,255,255,0.6)', borderRadius: '12px', border: '1px solid rgba(30,58,138,0.05)' }}>
+                        "{text}"
+                      </div>
+                    ))}
+                    {(!q.jawaban || q.jawaban.length === 0) && <p style={{ textAlign: 'center', color: 'var(--csi-muted)' }}>Belum ada jawaban.</p>}
+                  </div>
+                )}
+              </div>
+            </Glass>
+          ))}
+          {dashData.qualitative?.length === 0 && <div style={{ textAlign: 'center', padding: '100px' }}>Tidak ada data kualitatif untuk filter ini.</div>}
         </div>
       )}
     </div>
   );
 }
 
-function avatarColor(name) {
-  const palette = ["#1e3a8a", "#3b82f6", "#eab308", "#10b981", "#f97316", "#8b5cf6", "#ec4899", "#0ea5e9"];
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return palette[h % palette.length];
+function FilterGroup({ label, value, options, onChange }) {
+  return (
+    <div className="csi-filter-group">
+      <span className="csi-filter-label">{label}</span>
+      <select className="csi-filter-select" value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="ALL">Semua {label}</option>
+        {(options || []).map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
-function IPAQuadrant() {
+function IPAQuadrant({ data, xThreshold, yThreshold }) {
   const [hover, setHover] = useState(null);
-  // Bigger viewBox: x = importance, y = performance, both 1..5
-  const xMid = 4.4; // mean importance threshold
-  const yMid = 4.3; // mean performance threshold
+  const scale = (val) => ((val - 1) / 4) * 100;
+  const xMid = scale(xThreshold || 4);
+  const yMid = 100 - scale(yThreshold || 4);
+
   return (
     <div className="csi-ipa">
       <svg viewBox="0 0 100 100" className="csi-ipa__svg">
-        {/* quadrant fills */}
-        <rect x="0" y="0" width="50" height="50" fill="rgba(234, 179, 8, 0.1)" />
-        <rect x="50" y="0" width="50" height="50" fill="rgba(239, 68, 68, 0.12)" />
-        <rect x="0" y="50" width="50" height="50" fill="rgba(16, 185, 129, 0.1)" />
-        <rect x="50" y="50" width="50" height="50" fill="rgba(30, 58, 138, 0.1)" />
-        {/* axes */}
-        <line x1="50" y1="0" x2="50" y2="100" stroke="rgba(30,58,138,0.35)" strokeWidth="0.4" strokeDasharray="1 1" />
-        <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(30,58,138,0.35)" strokeWidth="0.4" strokeDasharray="1 1" />
-
-        {DIM_SCORES.map((d, i) => {
-          const x = ((d.importance - 3.5) / 1.5) * 100;
-          const y = 100 - ((d.performance - 3.5) / 1.5) * 100;
+        <rect x="0" y="0" width={xMid} height={yMid} fill="rgba(234, 179, 8, 0.1)" />
+        <rect x={xMid} y="0" width={100 - xMid} height={yMid} fill="rgba(16, 185, 129, 0.12)" />
+        <rect x="0" y={yMid} width={xMid} height={100 - yMid} fill="rgba(239, 68, 68, 0.1)" />
+        <rect x={xMid} y={yMid} width={100 - xMid} height={100 - yMid} fill="rgba(30, 58, 138, 0.1)" />
+        <line x1={xMid} y1="0" x2={xMid} y2="100" stroke="rgba(30,58,138,0.35)" strokeWidth="0.4" strokeDasharray="1 1" />
+        <line x1="0" y1={yMid} x2="100" y2={yMid} stroke="rgba(30,58,138,0.35)" strokeWidth="0.4" strokeDasharray="1 1" />
+        {data.map((d, i) => {
+          const x = scale(d.importance);
+          const y = 100 - scale(d.performance);
           return (
             <g key={d.id} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
               <circle cx={x} cy={y} r={hover === i ? "3.5" : "2.6"} fill="#1e3a8a" stroke="#fff" strokeWidth="0.6" style={{ transition: "all .2s" }} />
@@ -255,49 +482,11 @@ function IPAQuadrant() {
             </g>
           );
         })}
-
-        {/* labels */}
-        <text x="3" y="6" fontSize="2.8" fontWeight="700" fill="#854d0e">II · Concentrate Here</text>
-        <text x="65" y="6" fontSize="2.8" fontWeight="700" fill="#991b1b">I · Keep Up The Good Work</text>
-        <text x="3" y="96" fontSize="2.8" fontWeight="700" fill="#065f46">III · Low Priority</text>
-        <text x="65" y="96" fontSize="2.8" fontWeight="700" fill="#1e3a8a">IV · Possible Overkill</text>
       </svg>
       <div className="csi-ipa__axes">
         <span>← Importance →</span>
         <span style={{ writingMode: "vertical-rl" }}>← Performance →</span>
       </div>
-    </div>
-  );
-}
-
-function WordCloud() {
-  const max = Math.max(...WORDS.map((w) => w.n));
-  const min = Math.min(...WORDS.map((w) => w.n));
-  return (
-    <div className="csi-cloud-wrap">
-      {WORDS.map((w, i) => {
-        const t = (w.n - min) / (max - min);
-        const size = 14 + t * 36;
-        const colors = ["#1e3a8a", "#3b82f6", "#eab308", "#854d0e", "#475569"];
-        const c = colors[i % colors.length];
-        const rot = (i % 3 === 0 && t < 0.5) ? -6 : 0;
-        return (
-          <span
-            key={w.w}
-            className="csi-cloud__w"
-            style={{
-              fontSize: size,
-              color: c,
-              opacity: 0.45 + t * 0.55,
-              fontWeight: t > 0.5 ? 700 : 500,
-              transform: `rotate(${rot}deg)`,
-            }}
-            title={`${w.w} — ${w.n}×`}
-          >
-            {w.w}
-          </span>
-        );
-      })}
     </div>
   );
 }

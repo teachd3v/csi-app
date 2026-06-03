@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 export function MeshBackground({ intensity = "heavy" }) {
   return (
     <div className="csi-mesh" data-intensity={intensity}>
@@ -51,7 +49,6 @@ export function MobileNav({ title, onNav }) {
         <a href="#" className={title === "Sistem CSI" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("landing"); }}>Beranda</a>
         <a href="#" className={title === "Survey CSI" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("survey"); }}>Survey</a>
         <a href="#" className={title === "Dashboard" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("dashboard"); }}>Dashboard</a>
-        <a href="#" className={title === "Admin" ? "is-active" : ""} onClick={(e) => { e.preventDefault(); handleNav("admin"); }}>Admin</a>
       </nav>
     </header>
   );
