@@ -81,7 +81,7 @@ function AppContent() {
 
         <div key={location.pathname} className="csi-screen-enter">
           <Routes>
-            <Route path="/" element={<LandingScreen onNav={handleNav} />} />
+            <Route path="/" element={<LandingScreen onNav={handleNav} user={user} onLogout={handleLogout} />} />
             <Route path="/login" element={<LoginScreen onLoginSuccess={handleLoginSuccess} />} />
             <Route 
               path="/survey" 

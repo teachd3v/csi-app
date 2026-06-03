@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Pill, Glass, Btn, Sparkline } from '../components'
+import { MobileNav } from '../layout'
 import { api } from '../utils/api'
 
-function LandingScreen({ onNav }) {
+function LandingScreen({ onNav, user, onLogout }) {
   const [hovered, setHovered] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +23,14 @@ function LandingScreen({ onNav }) {
 
   return (
     <div className="csi-page csi-landing">
+      {user && (
+        <MobileNav 
+          title={`Selamat Datang, ${user.nama.split(' ')[0]}`} 
+          onNav={onNav} 
+          onLogout={onLogout} 
+        />
+      )}
+      
       {/* Hero */}
       <section className="csi-hero">
         <div className="csi-hero__copy">
@@ -39,9 +48,17 @@ function LandingScreen({ onNav }) {
             dari penyusunan instrumen hingga visualisasi hasil.
           </p>
           <div className="csi-hero__cta">
-            <Btn kind="primary" onClick={() => onNav("survey")}>
-              Mulai Survey →
-            </Btn>
+            {user ? (
+              <>
+                <Btn kind="primary" onClick={() => onNav(user.role === 'superadmin' ? "dashboard" : "survey")}>
+                  Buka {user.role === 'superadmin' ? "Dashboard" : "Survey"} →
+                </Btn>
+              </>
+            ) : (
+              <Btn kind="primary" onClick={() => onNav("login")}>
+                Mulai Survey →
+              </Btn>
+            )}
           </div>
 
           <div className="csi-hero__metrics">
@@ -258,10 +275,16 @@ function LandingScreen({ onNav }) {
         <Glass className="csi-cta">
           <div>
             <h3>Siap mengukur kepuasan pengguna Anda?</h3>
-            <p>Silakan login untuk memulai mengisi instrumen survey.</p>
+            <p>{user ? "Lanjutkan aktivitas Anda di sistem." : "Silakan login untuk memulai mengisi instrumen survey."}</p>
           </div>
           <div className="csi-cta__btns">
-            <Btn kind="primary" onClick={() => onNav("survey")}>Mulai Survey →</Btn>
+            {user ? (
+              <Btn kind="primary" onClick={() => onNav(user.role === 'superadmin' ? "dashboard" : "survey")}>
+                Buka {user.role === 'superadmin' ? "Dashboard" : "Survey"} →
+              </Btn>
+            ) : (
+              <Btn kind="primary" onClick={() => onNav("login")}>Mulai Survey →</Btn>
+            )}
           </div>
         </Glass>
       </section>
