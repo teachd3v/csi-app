@@ -65,7 +65,7 @@ function AppContent() {
   const handleLogout = () => {
     setUser(null);
     sessionStorage.removeItem("csi_user");
-    navigate("/login");
+    navigate("/");
   };
 
   const handleNav = (s) => {
@@ -82,7 +82,7 @@ function AppContent() {
         <div key={location.pathname} className="csi-screen-enter">
           <Routes>
             <Route path="/" element={<LandingScreen onNav={handleNav} user={user} onLogout={handleLogout} />} />
-            <Route path="/login" element={<LoginScreen onLoginSuccess={handleLoginSuccess} />} />
+            <Route path="/login" element={<LoginScreen onLoginSuccess={handleLoginSuccess} onNav={handleNav} />} />
             <Route 
               path="/survey" 
               element={

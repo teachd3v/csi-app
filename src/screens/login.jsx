@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Glass, Pill, Btn } from '../components';
 import { api } from '../utils/api';
 
-function LoginScreen({ onLoginSuccess }) {
+function LoginScreen({ onLoginSuccess, onNav }) {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,11 +34,30 @@ function LoginScreen({ onLoginSuccess }) {
   return (
     <div className="csi-page csi-login" style={{ 
       display: 'flex', 
+      flexDirection: 'column',
       alignItems: 'center', 
       justifyContent: 'center', 
       minHeight: 'calc(100vh - 100px)',
       paddingTop: '5vh' 
     }}>
+      <div style={{ width: '100%', maxWidth: '400px', marginBottom: '16px' }}>
+        <button 
+          onClick={() => onNav('landing')} 
+          style={{ 
+            background: 'transparent', 
+            border: 'none', 
+            color: 'var(--csi-blue)', 
+            fontWeight: '600', 
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 0'
+          }}
+        >
+          ← Kembali ke Beranda
+        </button>
+      </div>
       <Glass className="csi-login__card" style={{ padding: '40px', maxWidth: '400px', width: '100%' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div className="csi-nav__logo" style={{ margin: '0 auto 16px' }}>
